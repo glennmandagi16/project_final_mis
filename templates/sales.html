@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sales Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0; /* Reset default body margin */
+      background-color: #f9f9f9;
+    }
+    .navbar {
+      background-color: #333;
+      overflow: hidden;
+      padding: 15px 30px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .navbar a {
+      float: left;
+      display: block;
+      color: white;
+      text-align: center;
+      padding: 14px 20px;
+      text-decoration: none;
+      font-size: 17px;
+      border-radius: 5px;
+      transition: background-color 0.3s ease;
+    }
+    .navbar a:hover {
+      background-color: #575757;
+    }
+    .navbar a.active {
+      background-color: #007bff;
+      color: white;
+    }
+    .container {
+      margin: 30px; /* Apply body margin here instead */
+    }
+    h1, h2, h3 {
+      color: #333;
+      text-align: center;
+    }
+    .section {
+      background: #fff;
+      padding: 20px;
+      margin-bottom: 30px;
+      border-radius: 10px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    ul {
+      padding-left: 20px;
+    }
+    /* New styling for chart containers */
+    .chart-wrapper {
+        position: relative; /* Important for Chart.js responsiveness */
+        width: 100%; /* Allow wrappers to take full width of their parent .section */
+        max-width: 700px; /* Optional: set a max width for large screens */
+        height: 200px; /* Fixed height for all chart containers */
+        margin: 20px auto; /* Center the containers within their sections */
+    }
+    canvas {
+      display: block; /* Ensures canvas takes full space of its container */
+      width: 100% !important; /* Make canvas fill its parent */
+      height: 100% !important; /* Make canvas fill its parent */
+    }
+  </style>
+</head>
+<body>
+
+  <div class="navbar">
+    <a class="active" href="/">📊 Sales</a>
+    <a href="/customers">👥 Customers</a>
+    <a href="/products">📦 Products</a>
+    <a href="/employees">👨‍💼 Employees</a>
+    <a href="/transactions">💸 Transactions</a>
+  </div>
+
+  <div class="container">
+    <h1>📊 Sales Dashboard</h1>
+
+    <div class="section">
+      <h2>Total Sales: ${{ total_sales }}</h2>
+    </div>
+
+    <div class="section">
+      <h3>🔥 Top 5 Products by Total Sales</h3>
+      <div class="chart-wrapper">
+        <canvas id="topProductsChart"></canvas> {# Height controlled by wrapper #}
+      </div>
+    </div>
+
+    <div class="section">
+      <h3>🏪 Sales per Store</h3>
+      <div class="chart-wrapper">
+        <canvas id="storeSalesChart"></canvas> {# Height controlled by wrapper #}
+      </div>
+    </div>
+
+    <div class="section">
+      <h3>📈 Monthly Revenue Trend</h3>
+      <div class="chart-wrapper">
+        <canvas id="revenueChart"></canvas> {# Height controlled by wrapper #}
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // --- Monthly Revenue Line Chart ---
+    const revenueLabels = {{ monthly_revenue | map(attribute='month') | list | tojson }};
+    const revenueData = {{ monthly_revenue | map(attribute='total') | list | tojson }};
+    new Chart(document.getElementById('revenueChart'), {
+      type: 'line',
+      data: {
+        labels: revenueLabels,
+        datasets: [{
+          label: 'Monthly Revenue',
+          data: revenueData,
+          borderColor: '#007bff',
+          backgroundColor: 'rgba(0, 123, 255, 0.1)',
+          fill: true,
+          tension: 0.3
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false, // Important for controlling height via container
+        plugins: {
+          legend: { display: true }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              callback: value => '$' + value
+            }
+          }
+        }
+      }
+    });
+
+    // --- Top Products Bar Chart ---
+    const topLabels = {{ top_products | map(attribute='ProductName') | list | tojson }};
+    const topData = {{ top_products | map(attribute='total') | list | tojson }};
+    new Chart(document.getElementById('topProductsChart'), {
+      type: 'bar',
+      data: {
+        labels: topLabels,
+        datasets: [{
+          label: 'Total Sales',
+          data: topData,
+          backgroundColor: ['#007bff', '#28a745', '#ffc107', '#dc3545', '#6610f2'],
+          borderRadius: 6
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false, // Important for controlling height via container
+        plugins: {
+          legend: { display: false }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              callback: value => '$' + value
+            }
+          }
+        }
+      }
+    });
+
+    // --- Store Sales Bar Chart ---
+    const storeLabels = {{ sales_per_store | map(attribute='StoreName') | list | tojson }};
+    const storeData = {{ sales_per_store | map(attribute='total') | list | tojson }};
+    new Chart(document.getElementById('storeSalesChart'), {
+      type: 'bar',
+      data: {
+        labels: storeLabels,
+        datasets: [{
+          label: 'Total Sales per Store',
+          data: storeData,
+          backgroundColor: ['#17a2b8', '#fd7e14', '#20c997', '#6f42c1', '#e83e8c'],
+          borderRadius: 6
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false, // Important for controlling height via container
+        plugins: {
+          legend: { display: false }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              callback: value => '$' + value
+            }
+          }
+        }
+      }
+    });
+  </script>
+
+</body>
+</html>

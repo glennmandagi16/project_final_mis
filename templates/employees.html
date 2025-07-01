@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            background-color: #f9f9f9;
+        }
+        .navbar {
+            background-color: #333;
+            overflow: hidden;
+            padding: 15px 30px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .navbar a {
+            float: left;
+            display: block;
+            color: white;
+            text-align: center;
+            padding: 14px 20px;
+            text-decoration: none;
+            font-size: 17px;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+        }
+        .navbar a:hover {
+            background-color: #575757;
+        }
+        .navbar a.active {
+            background-color: #007bff;
+            color: white;
+        }
+        .container {
+            margin: 30px;
+        }
+        h1, h2, h3 {
+            color: #333;
+            text-align: center;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .dashboard-section {
+            margin-bottom: 40px;
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .chart-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 600px; /* Adjust max width for charts */
+            height: 250px; /* Fixed height for charts */
+            margin: 20px auto;
+        }
+        canvas {
+            display: block;
+            width: 100% !important;
+            height: 100% !important;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="navbar">
+        <a href="/">📊 Sales</a>
+        <a href="/customers">👥 Customers</a>
+        <a href="/products">📦 Products</a>
+        <a class="active" href="/employees">👨‍💼 Employees</a>
+        <a href="/transactions">💸 Transactions</a>
+    </div>
+
+    <div class="container">
+        <h1>👨‍💼 Employees Dashboard</h1>
+
+        <div class="dashboard-section">
+            <h2>Total Employees: {{ total_employees }}</h2>
+            <p>Average Salary: ${{ "{:,.2f}".format(avg_salary) }}</p>
+        </div>
+
+        <div class="dashboard-section">
+            <h3>Employees by Role</h3>
+            <div class="chart-wrapper">
+                <canvas id="employeesByRoleChart"></canvas>
+            </div>
+        </div>
+
+        <div class="dashboard-section">
+            <h3>Employees by Store</h3>
+            <div class="chart-wrapper">
+                <canvas id="employeesByStoreChart"></canvas>
+            </div>
+        </div>
+
+        <div class="dashboard-section">
+            <h3>New Hires per Month</h3>
+            <div class="chart-wrapper">
+                <canvas id="newHiresMonthlyChart"></canvas>
+            </div>
+        </div>
+
+        <div class="dashboard-section">
+            <h3>Low Performance Employees (Score < 70)</h3>
+            {% if low_performance_employees %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Role</th>
+                        <th>Performance Score</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for employee in low_performance_employees %}
+                    <tr>
+                        <td>{{ employee.Name }}</td>
+                        <td>{{ employee.Role }}</td>
+                        <td>{{ employee.PerformanceScore }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p>All employees have a performance score of 70 or higher.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <script>
+        // --- Employees by Role - Bar Chart ---
+        const roleLabels = {{ employees_by_role | map(attribute='Role') | list | tojson }};
+        const roleData = {{ employees_by_role | map(attribute='count') | list | tojson }};
+        new Chart(document.getElementById('employeesByRoleChart'), {
+            type: 'bar',
+            data: {
+                labels: roleLabels,
+                datasets: [{
+                    label: 'Number of Employees',
+                    data: roleData,
+                    backgroundColor: '#007bff',
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    title: { display: false }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            precision: 0
+                        }
+                    }
+                }
+            }
+        });
+
+        // --- Employees by Store - Bar Chart ---
+        const storeLabels = {{ employees_by_store | map(attribute='StoreName') | list | tojson }};
+        const storeData = {{ employees_by_store | map(attribute='count') | list | tojson }};
+        new Chart(document.getElementById('employeesByStoreChart'), {
+            type: 'bar',
+            data: {
+                labels: storeLabels,
+                datasets: [{
+                    label: 'Number of Employees',
+                    data: storeData,
+                    backgroundColor: '#28a745',
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    title: { display: false }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            precision: 0
+                        }
+                    }
+                }
+            }
+        });
+
+        // --- New Hires Monthly - Line Chart ---
+        const newHiresLabels = {{ new_hires_monthly | map(attribute='month') | list | tojson }};
+        const newHiresData = {{ new_hires_monthly | map(attribute='new_hires') | list | tojson }};
+        new Chart(document.getElementById('newHiresMonthlyChart'), {
+            type: 'line',
+            data: {
+                labels: newHiresLabels,
+                datasets: [{
+                    label: 'New Hires',
+                    data: newHiresData,
+                    borderColor: '#ffc107',
+                    backgroundColor: 'rgba(255, 193, 7, 0.1)',
+                    fill: true,
+                    tension: 0.3
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: true },
+                    title: { display: false }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            precision: 0
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+
+</body>
+</html>

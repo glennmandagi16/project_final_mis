@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0; /* Reset default body margin */
+            background-color: #f9f9f9;
+        }
+        .navbar {
+            background-color: #333;
+            overflow: hidden;
+            padding: 15px 30px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .navbar a {
+            float: left;
+            display: block;
+            color: white;
+            text-align: center;
+            padding: 14px 20px;
+            text-decoration: none;
+            font-size: 17px;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+        }
+        .navbar a:hover {
+            background-color: #575757;
+        }
+        .navbar a.active {
+            background-color: #007bff;
+            color: white;
+        }
+        .container {
+            margin: 30px; /* Apply body margin here instead */
+        }
+        h1, h2 {
+            text-align: center;
+            color: #333;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .dashboard-section {
+            margin-bottom: 40px;
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        /* New styling for chart containers */
+        .chart-container {
+            position: relative; /* Important for Chart.js responsiveness */
+            width: 80%; /* Adjust width as needed, e.g., 60% or 100% */
+            max-width: 400px; /* Max width for pie chart */
+            height: 250px; /* Fixed height for pie chart container */
+            margin: 20px auto; /* Center the container and add spacing */
+        }
+        .bar-chart-container {
+            position: relative;
+            width: 100%; /* Bar charts can take full width */
+            max-width: 600px; /* Max width for bar charts */
+            height: 250px; /* Fixed height for bar chart containers */
+            margin: 20px auto;
+        }
+        canvas {
+            display: block; /* Ensure canvas takes full space of its container */
+            width: 100% !important; /* Make canvas fill its parent */
+            height: 100% !important; /* Make canvas fill its parent */
+        }
+    </style>
+</head>
+<body>
+
+    <div class="navbar">
+        <a href="/">📊 Sales</a>
+        <a class="active" href="/customers">👥 Customers</a>
+        <a href="/products">📦 Products</a>
+        <a href="/employees">👨‍💼 Employees</a>
+        <a href="/transactions">💸 Transactions</a>
+    </div>
+
+    <div class="container">
+        <h1>👥 Customer Dashboard</h1>
+
+        <div class="dashboard-section">
+            <h2>Top 5 Customers by Spend</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Customer Name</th>
+                        <th>Total Spent</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for customer in top_customers %}
+                    <tr>
+                        <td>{{ customer.Name }}</td>
+                        <td>${{ "{:,.2f}".format(customer.total_spent) }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {# Removed "Average Spend per Customer" section #}
+
+        <div class="dashboard-section">
+            <h2>Customers by Gender</h2>
+            <div class="chart-container">
+                <canvas id="genderChart"></canvas>
+            </div>
+        </div>
+
+        <div class="dashboard-section">
+            <h2>Customers by Age Group</h2>
+            <div class="bar-chart-container">
+                <canvas id="ageGroupChart"></canvas>
+            </div>
+        </div>
+
+        <div class="dashboard-section">
+            <h2>Customers by Region</h2>
+            <div class="bar-chart-container">
+                <canvas id="regionChart"></canvas>
+            </div>
+        </div>
+
+        <div class="dashboard-section">
+            <h2>Customers by Loyalty Status</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Loyalty Status</th>
+                        <th>Count</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for entry in customers_by_loyalty %}
+                    <tr>
+                        <td>{{ entry.LoyaltyStatus }}</td>
+                        <td>{{ entry.count }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // --- Customers by Gender - Pie Chart ---
+        const genderLabels = {{ customers_by_gender | map(attribute='Gender') | list | tojson }};
+        const genderData = {{ customers_by_gender | map(attribute='count') | list | tojson }};
+        new Chart(document.getElementById('genderChart'), {
+            type: 'pie',
+            data: {
+                labels: genderLabels,
+                datasets: [{
+                    data: genderData,
+                    backgroundColor: ['#007bff', '#ffc107', '#28a745', '#dc3545'], // Example colors
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    title: {
+                        display: false,
+                        text: 'Customers by Gender'
+                    }
+                }
+            }
+        });
+
+        // --- Customers by Age Group - Bar Chart ---
+        const ageLabels = {{ customers_by_age_group | map(attribute='age_group') | list | tojson }};
+        const ageData = {{ customers_by_age_group | map(attribute='count') | list | tojson }};
+        new Chart(document.getElementById('ageGroupChart'), {
+            type: 'bar',
+            data: {
+                labels: ageLabels,
+                datasets: [{
+                    label: 'Number of Customers',
+                    data: ageData,
+                    backgroundColor: '#17a2b8', // A single color for bars
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    title: {
+                        display: false,
+                        text: 'Customers by Age Group'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            precision: 0 // Ensure whole numbers for counts
+                        }
+                    }
+                }
+            }
+        });
+
+        // --- Customers by Region - Bar Chart ---
+        const regionLabels = {{ customers_by_region | map(attribute='Region') | list | tojson }};
+        const regionData = {{ customers_by_region | map(attribute='count') | list | tojson }};
+        new Chart(document.getElementById('regionChart'), {
+            type: 'bar',
+            data: {
+                labels: regionLabels,
+                datasets: [{
+                    label: 'Number of Customers',
+                    data: regionData,
+                    backgroundColor: '#28a745', // A single color for bars
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    title: {
+                        display: false,
+                        text: 'Customers by Region'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            precision: 0 // Ensure whole numbers for counts
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+
+</body>
+</html>

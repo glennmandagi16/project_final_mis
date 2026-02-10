@@ -1,25 +1,19 @@
 # 📊 MIS Final Project – Simple Dashboard with Flask
 Dashboard sederhana berbasis web untuk sistem informasi manajemen (**MIS**) yang dirancang khusus untuk **Manager Sistem Informasi** dalam memantau data penting perusahaan secara ringkas dan interaktif.
-
 ---
-
 ## 🚀 Fitur Utama
 🔹 **Sales Dashboard** – Menampilkan performa penjualan per kategori dan tren penjualan.  
 🔹 **Customer Dashboard** – Melihat pelanggan utama, rata-rata pembelanjaan, dan segmentasi wilayah/gender.  
 🔹 **Product Dashboard** – Ringkasan produk per kategori dan performa produk.  
 🔹 **Employee Dashboard** – Informasi distribusi karyawan berdasarkan peran dan performa.  
 🔹 **Transaction Dashboard** – Menyajikan tren transaksi, metode pembayaran, dan total penjualan.
-
 ---
-
 ## 🛠 Teknologi yang Digunakan
 - **Bahasa:** Python, HTML  
 - **Framework:** [Flask](https://flask.palletsprojects.com/)  
 - **Template Engine:** Jinja2 (via Flask Templates)  
 - **Database:** SQLite (`mis_project_regenerated.db`)
-
 ---
-
 ## ▶️ Cara Menjalankan Aplikasi
 
 1. **Clone repositori ini:**
